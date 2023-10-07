@@ -5,7 +5,10 @@
 
 # Solution
 
-# To fix this, we first need to store the timezone information in users table, we also need to make sure that for every different time zone we are supporting, 
+# save timezone in users table
+# we can extract the timezone of a user from the request or we can ask the user to update his/her timezone, either way, we should have timezone field in the users table
+
+# we also need to make sure that for every different time zone we are supporting, 
 # we will run the job on start of every month(of a particular timezone) that will reset quota for its users
 
 

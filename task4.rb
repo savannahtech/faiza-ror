@@ -1,8 +1,20 @@
 # Problems with the code
 
 # Old syntax (before_filter)
+
 # Separation of concerns is voilated in the code as (current_user.count_hits >= 10000) should be moved to user.rb
+
+# No security measures are applied
+# we should protection against csrf, for that we should include csrf token to every request that submits some data
+# we should also use api token for each user
+# we should use safe_params for any data that is submitted so that users are not able to submit additional parameters
+# this will also help to secure the site from sql_injection
+# this will also help to protect the site form "Mass Assignment"
+
 # No data validations are used
+# we should also validate the data, for example, if a date is passed in the data, we should validate its format 
+# if user tries to input his name, we should validate that name should not contain any special characters, etc.
+
 # Tests are not written
 
 # With above bad practices fixed, the final code will look like
