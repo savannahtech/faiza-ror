@@ -5,30 +5,41 @@
 
 # Solution
 
-# To fix this, we first need to store the timezone information in users table, we also need to make sure that for every different time zone we are supporting, 
-# we will run the job on start of every month(of a particular timezone) that will reset quota for its users
+# save timezone in users table
+# we can extract the timezone of a user from the request or we can ask the user to update his/her timezone, either way, we should have timezone field in the users table
 
+# now we need to make sure that when we are processing any time related logic, we should always consider timezones
+# so that every user has his last reset info based on his timezone
 
-# so now our config/schedule.rb file will look like
+# so our updated user.rb will look like
 
-# For US
-every :month, at: 'beginning of the month at 00:00', tz: 'Eastern Time (US & Canada)' do
-  rake 'reset_user_quotas:reset[Eastern Time (US & Canada)]'
-end
+class User < ApplicationRecord
 
-# For Australia
-every :month, at: 'beginning of the month at 00:00', tz: 'Sydney' do
-  rake 'reset_user_quotas:reset[Sydney]'
-end
-
-# Now, our rake file will look like
-namespace :reset_user_quotas do
-  desc 'Reset user quotas at the start of every month'
-  task :reset, [:timezone] => :environment do
-    timezone = args[:timezone]
-    users = User.where(timezone: timezone)
-    users.find_each do |user|
-      user.reset_hits_count
+  def reset_quota_if_needed
+    current_datetime = DateTime.now.in_time_zone(self.timezone)
+    last_reset_datetime = DateTime.parse self.last_reset_datetime
+    hours_difference = ((current_datetime - last_reset_datetime) * 24).to_i
+    if hours_difference >= 720 # 30 days, hours are used instead of days to be more precise about the reseting
+      extra_hours = hours_difference - 720
+      current.reset_hits_count(current_datetime - extra_hours.hours)
     end
   end
+
+  def last_reset_datetime
+    Rails.cache.read("user_#{id}_last_reset_datetime")
+  end
+
+  def hits_count
+    Rails.cache.read("user_#{id}_hits_count").to_i
+  end
+
+  def increment_hits_count
+    Rails.cache.increment("user_#{id}_hits_count")
+  end
+
+  def reset_hits_count(datetime)
+    Rails.cache.write("user_#{id}_hits_count", 0)
+    Rails.cache.write("user_#{id}_last_reset_datetime", datetime)
+  end
+
 end
